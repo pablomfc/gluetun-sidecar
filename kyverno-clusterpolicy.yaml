@@ -1,0 +1,35 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: inject-sidecar-gluetun-by-annotations
+  annotations:
+    policies.kyverno.io/title: Inject Sidecar Container Gluetun
+spec:
+  rules:
+  - name: inject-sidecar-gluetun-by-annotations
+    match:
+      any:
+      - resources:
+          kinds:
+          - Deployment
+    mutate:
+      patchStrategicMerge:
+        spec:
+          template:
+            metadata:
+              annotations:
+                (vpn/gluetun-inject): "true"
+            spec:
+              containers:
+              - name: gluetun
+                envFrom:
+                - secretRef:
+                    name: vpn                   
+                image: qmcgaw/gluetun
+                imagePullPolicy: IfNotPresent
+                resources: {}
+                securityContext:
+                  capabilities:
+                    add:
+                      - NET_ADMIN
+                      - SYS_MODULE
